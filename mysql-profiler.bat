@@ -1,2 +1,2 @@
 @echo off
-python "C:\Users\walbe\Development\python-scripts\mysql-profiler.py" %*
+python "C:\Users\walbe\Development\mysql-profiler\mysql-profiler.py" %*

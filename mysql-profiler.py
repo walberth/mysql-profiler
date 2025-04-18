@@ -7,7 +7,8 @@ def connect_to_database():
     db_config = {
         'user': 'root',
         'password': 'sql2016.',
-        'host': 'localhost',
+        'host': '192.168.18.150',
+        'port': 33061,
         'database': 'exphadis'
     }    
     return mysql.connector.connect(**db_config)
@@ -63,7 +64,7 @@ def fetch_general_log(user_host_filter, latest_event_time):
         connection.close()
 
 def main():
-    user_host_filter = '%wgutierrez%'
+    user_host_filter = '%root%'
     latest_event_time = datetime.now()
 
     try:
