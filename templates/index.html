@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icon-rbg.png') }}" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='console.css') }}"
+    />
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  </head>
+  <body
+    class="app-shell"
+    data-api-url="{{ url_for('api_logs') }}"
+    data-refresh-ms="{{ refresh_ms }}"
+    data-max-log-entries="{{ max_log_entries }}"
+  >
+    <div class="screen-noise" aria-hidden="true"></div>
+    <main class="app-layout">
+      <header class="app-header">
+        <div>
+          <div class="prompt-line">
+            <span class="prompt-user">{{ title|lower|replace(' ', '-') }}</span>
+            <span class="prompt-separator">@</span>
+            <span class="prompt-host">nas</span>
+            <span class="prompt-separator">:</span>
+            <span class="prompt-path">/srv/mysql</span>
+            <span class="prompt-command"> tail -f general_log</span>
+          </div>
+          <h1>{{ title }}</h1>
+          <p class="panel-copy">
+            Vista protegida de mysql.general_log con buffer en memoria y
+            actualización continua.
+          </p>
+        </div>
+
+        <form
+          method="post"
+          action="{{ url_for('logout') }}"
+          class="logout-form"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <button type="submit" class="terminal-button terminal-button-ghost">
+            Cerrar sesión
+          </button>
+        </form>
+      </header>
+
+      <section class="status-grid">
+        <article class="metric-card">
+          <span class="metric-label">DB</span>
+          <strong class="metric-value">{{ db_name }}</strong>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Host</span>
+          <strong class="metric-value">{{ db_host }}:{{ db_port }}</strong>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Filtro</span>
+          <strong class="metric-value metric-value-small"
+            >{{ user_host_filter }}</strong
+          >
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Estado</span>
+          <strong class="metric-value" id="status-value">Inicializando</strong>
+        </article>
+      </section>
+
+      <section class="toolbar-panel">
+        <div class="toolbar-row">
+          <label class="field-group" for="filter-input">
+            <span>Filtro SQL</span>
+            <input
+              id="filter-input"
+              type="search"
+              placeholder="SELECT, UPDATE, tabla, usuario..."
+            />
+          </label>
+
+          <label class="field-group field-group-small" for="limit-input">
+            <span>Límite</span>
+            <input
+              id="limit-input"
+              type="number"
+              min="20"
+              step="20"
+              value="{{ max_log_entries }}"
+            />
+          </label>
+
+          <button id="toggle-scroll" type="button" class="terminal-button">
+            Auto-scroll ON
+          </button>
+        </div>
+
+        <div class="summary-bar" id="summary-bar">
+          Esperando primer muestreo...
+        </div>
+      </section>
+
+      <section class="terminal-window" aria-live="polite">
+        <div class="terminal-titlebar">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+          <span class="terminal-title">mysql.general_log</span>
+        </div>
+        <div id="logs" class="terminal-log"></div>
+      </section>
+    </main>
+  </body>
+</html>

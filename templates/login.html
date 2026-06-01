@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }} | Acceso</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icon-rbg.png') }}" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='console.css') }}"
+    />
+  </head>
+  <body class="login-shell">
+    <main class="login-layout">
+      <section class="login-panel">
+        <div class="prompt-line">
+          <span class="prompt-user">secure-shell</span>
+          <span class="prompt-separator">@</span>
+          <span class="prompt-host">mysql-profiler</span>
+          <span class="prompt-separator">:</span>
+          <span class="prompt-path">~</span>
+          <span class="prompt-command"> login</span>
+        </div>
+
+        <h1>{{ title }}</h1>
+        <p class="panel-copy">
+          Acceso protegido. La sesión se mantiene activa hasta {{ session_days
+          }} días si sigues usando el panel.
+        </p>
+
+        {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+        {% endif %} {% if locked %}
+        <div class="alert alert-warning">
+          Demasiados intentos fallidos. Espera {{ retry_after }} segundos.
+        </div>
+        {% endif %}
+
+        <form method="post" class="terminal-form" autocomplete="off">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+
+          <label for="username">Usuario</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            value="{{ username }}"
+            autocapitalize="off"
+            spellcheck="false"
+            required
+          />
+
+          <label for="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autofocus
+            required
+          />
+
+          <button type="submit" class="terminal-button">Abrir consola</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
