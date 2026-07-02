@@ -8,16 +8,10 @@ services:
     network_mode: "host"
     volumes:
       - ./data:/data
+    env_file:
+      - .env
     environment:
       - PYTHONUNBUFFERED=1 # To get logs in real time
-      - WEB_HOST=0.0.0.0
-      - WEB_PORT=38110
-      - MAX_LOG_ENTRIES=500
-      - START_LOOKBACK_SECONDS=300
-      - SESSION_DAYS=30
-      - APP_SECRET_FILE=/data/session-secret
-      - WEB_AUTH_PASSWORD_FILE=/data/admin-password.txt
-      - TRUSTED_PROXY_HOPS=1
     labels:
       - "dockpeek.link=http://192.168.50.32:38110"
       - "dockpeek.tags=mysql-profiler,profiler"

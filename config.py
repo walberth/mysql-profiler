@@ -6,6 +6,26 @@ from pathlib import Path
 from werkzeug.security import check_password_hash
 
 
+def load_dotenv_file():
+    base_dir = Path(__file__).resolve().parent
+    env_path = base_dir / ".env"
+    if not env_path.exists():
+        return
+
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        os.environ.setdefault(key, value)
+
+
+load_dotenv_file()
+
+
 def env_int(name, default):
     return int(os.getenv(name, str(default)))
 
@@ -80,6 +100,7 @@ class Settings:
     user_host_filter: str
     secret_key: str
     session_days: int
+    api_key: str
     auth_username: str
     auth_password_mode: str
     auth_password_value: str
@@ -125,6 +146,7 @@ def load_settings():
         user_host_filter=os.getenv("USER_HOST_FILTER", "%wgutierrez%"),
         secret_key=_read_or_create_secret(secret_file),
         session_days=env_int("SESSION_DAYS", 30),
+        api_key=os.getenv("API_KEY", "").strip(),
         auth_username=os.getenv("WEB_AUTH_USERNAME", "admin"),
         auth_password_mode=auth_password_mode,
         auth_password_value=auth_password_value,

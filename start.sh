@@ -52,4 +52,5 @@ compose up -d
 
 log "[INFO] Docker Compose MYSQL Profiler services started."
 log "[INFO] UI disponible en http://192.168.50.32:38110"
-log "[INFO] Si no defines WEB_AUTH_PASSWORD o WEB_AUTH_PASSWORD_HASH, se generará una contraseña en mysql-profiler/data/admin-password.txt"
+log "[INFO] Configuración cargada desde mysql-profiler/.env"
+log "[INFO] Si defines el header X-Api-Key con el valor de API_KEY, la autenticación será automática"

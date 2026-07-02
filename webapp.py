@@ -9,6 +9,7 @@ import secrets
 from flask import (
     Flask,
     abort,
+    make_response,
     jsonify,
     redirect,
     render_template,
@@ -143,17 +144,62 @@ def create_app():
     def is_authenticated():
         return bool(session.get("authenticated"))
 
+    def authenticate_session(username):
+        session.clear()
+        session["authenticated"] = True
+        session["username"] = username
+        session.permanent = True
+        session["csrf_token"] = secrets.token_urlsafe(32)
+
+    def try_api_key_auth():
+        api_key = settings.api_key
+        if not api_key:
+            return False
+
+        candidate = request.headers.get("X-Api-Key", "").strip()
+        if not candidate or not secrets.compare_digest(candidate, api_key):
+            return False
+
+        if not is_authenticated():
+            authenticate_session("api-key")
+        return True
+
     def login_required(view):
         @wraps(view)
         def wrapped(*args, **kwargs):
+            if try_api_key_auth():
+                return view(*args, **kwargs)
             if is_authenticated():
                 return view(*args, **kwargs)
             if request.path.startswith("/api/"):
-                return jsonify({"error": "authentication_required"}), 401
-            next_url = request.full_path if request.query_string else request.path
-            return redirect(url_for("login", next=next_url))
+                return jsonify({"error": "forbidden"}), 403
+            return forbidden_page()
 
         return wrapped
+
+    def forbidden_page():
+        html = """<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>403 Forbidden</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+    .card{max-width:520px;padding:32px;border-radius:18px;background:#111827;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+    h1{margin:0 0 12px;font-size:32px}
+    p{margin:0;line-height:1.6;color:#cbd5e1}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>403 Forbidden</h1>
+    <p>No autorizado.</p>
+  </div>
+</body>
+</html>"""
+        response = make_response(html, 403)
+        response.headers["Content-Type"] = "text/html; charset=utf-8"
+        return response
 
     @app.after_request
     def apply_security_headers(response):
@@ -183,22 +229,20 @@ def create_app():
 
     @app.get("/login")
     def login():
-        if is_authenticated():
-            return redirect(url_for("index"))
-        locked, retry_after = limiter.status(client_id())
-        return render_template(
-            "login.html",
-            title=settings.profile_title,
-            username=settings.auth_username,
-            csrf_token=issue_csrf_token(),
-            error=None,
-            locked=locked,
-            retry_after=retry_after,
-            session_days=settings.session_days,
-        )
+        if try_api_key_auth():
+            next_url = request.args.get("next", "")
+            if not is_safe_next_url(next_url):
+                next_url = url_for("index")
+            return redirect(next_url)
+        return forbidden_page()
 
     @app.post("/login")
     def login_post():
+        if try_api_key_auth():
+            next_url = request.args.get("next", "")
+            if not is_safe_next_url(next_url):
+                next_url = url_for("index")
+            return redirect(next_url)
         validate_csrf()
         locked, retry_after = limiter.status(client_id())
         if locked:
@@ -235,11 +279,7 @@ def create_app():
             )
 
         limiter.reset(client_id())
-        session.clear()
-        session["authenticated"] = True
-        session["username"] = settings.auth_username
-        session.permanent = True
-        session["csrf_token"] = secrets.token_urlsafe(32)
+        authenticate_session(settings.auth_username)
         next_url = request.args.get("next", "")
         if not is_safe_next_url(next_url):
             next_url = url_for("index")
