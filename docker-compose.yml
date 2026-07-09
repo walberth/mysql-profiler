@@ -12,6 +12,3 @@ services:
       - .env
     environment:
       - PYTHONUNBUFFERED=1 # To get logs in real time
-    labels:
-      - "dockpeek.link=http://192.168.50.32:38110"
-      - "dockpeek.tags=mysql-profiler,profiler"
